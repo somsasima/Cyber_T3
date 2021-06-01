@@ -11,7 +11,7 @@ from os import listdir
 from os.path import isfile, join
 from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA512
-from Crypto.Signature import PKCS1_v1_5
+from Crypto.Signature import pkcs1_15
 
 clear = lambda: os.system("cls")
 
@@ -56,30 +56,40 @@ def en_text(data_s):
 
     #digitalSig
     key = RSA.import_key(open('pv.key').read())
-    h = SHA512.new(en_d)
+    
+    print(s)
+    
+    mes = s.encode('utf_8')
+    h = SHA512.new(mes)
 
-    sg = PKCS1_v1_5.new(key)
+    sg = pkcs1_15.new(key)
     signa = sg.sign(h)
 
     with open("hash.txt", "wb") as f:
         f.write(signa)
 
 def de_text(data_s):
+    #decrypt
+    with open(data_s, 'rb') as f:
+        s = f.read()
+    with open(data_s,"w+") as f:
+        de_d =decrypt(s)
+        f.write(de_d)
+
     #digital veri
     key = RSA.import_key(open('pb.key').read())
     with open("hash.txt", "rb") as f:
         signa = f.read()
     
-    #decrypt
-    with open(data_s, 'rb') as f:
-        s = f.read()
+    mes = de_d.encode('utf_8')
+    h = SHA512.new(mes)
 
-    with open(data_s,"w+") as f:
-        de_d =decrypt(s)
-        f.write(de_d)
-    
-    h = SHA512.new(s)
-    PKCS1_v1_5.new(key).verify(h, signa)
+    try:
+        pkcs1_15.new(key).verify(h, signa)
+        print("That True !! Digital Signa !!")
+    except (ValueError, TypeError):
+        print("GOD Plaease")
+
     
 
 
