@@ -20,6 +20,7 @@ clear = lambda: os.system("cls")
 
 #-------------------------- Gen Key RSA --------------------------------#
 key = RSA.generate(2048)
+
 private_key = key.export_key()
 with open("pv.key", "wb") as f:
     f.write(private_key)
@@ -30,6 +31,7 @@ with open("pb.key", "wb") as f:
 
 #------------------ Encrypt & DeCrypt TEXT  -----------------------------#
 BS = cryptoAES.block_size
+
 key = get_random_bytes(32)
 __key__ = hashlib.sha256(key).digest()
 
@@ -45,16 +47,15 @@ def encrypt(raw):
     return b
 
 def decrypt(enc):
-    passphrase = __key__
     encrypted = base64.b64decode(enc)
     IV = encrypted[:BS]
-    aes = domeAES.new(passphrase, domeAES.MODE_CFB, IV)
+    aes = domeAES.new(__key__, domeAES.MODE_CFB, IV)
     enc = aes.decrypt(encrypted[BS:])
     unpad = lambda s: s[:-ord(s[-1:])]
     enc = base64.b64decode(enc)
-    iv = enc[:cryptoAES.block_size]
+    iv = enc[:BS]
     cipher = cryptoAES.new(__key__, cryptoAES.MODE_CFB, iv)
-    b=  unpad(base64.b64decode(cipher.decrypt(enc[cryptoAES.block_size:])).decode('utf8'))
+    b=  unpad(base64.b64decode(cipher.decrypt(enc[BS:])).decode('utf8'))
     return b
 
 def en_text(data_s):
