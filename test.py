@@ -87,7 +87,7 @@ def en_text(data_s):
     sg = pkcs1_15.new(key)
     signa = sg.sign(h)
 
-    with open("hash.txt", "wb") as f:
+    with open("signa.txt", "wb") as f:
         f.write(signa)
 
 #decrypt + digital signa
@@ -101,7 +101,7 @@ def de_text(data_s):
 
     #digital veri
     key = RSA.import_key(open('pb.key').read())
-    with open("hash.txt", "rb") as f:
+    with open("signa.txt", "rb") as f:
         signa = f.read()
     
     mes = de_d.encode('utf_8')
