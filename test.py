@@ -20,7 +20,6 @@ clear = lambda: os.system("cls")
 
 #-------------------------- Gen Key RSA --------------------------------#
 key = RSA.generate(2048)
-
 private_key = key.export_key()
 with open("pv.key", "wb") as f:
     f.write(private_key)
@@ -33,11 +32,9 @@ with open("pb.key", "wb") as f:
 BS = cryptoAES.block_size
 
 key = get_random_bytes(32)
+__key__ = hashlib.sha256(key).digest()
 
-def __key__(key):
-    return hashlib.sha256(key).digest()
-
-def encrypt_text(raw):
+def ent(raw):
     pad = lambda s: s + (BS - len(s) % BS) * chr(BS - len(s) % BS)
     raw = base64.b64encode(pad(raw).encode('utf8'))
     iv = get_random_bytes(BS)
@@ -48,16 +45,17 @@ def encrypt_text(raw):
     b = base64.b64encode(IV + aes.encrypt(a))
     return b
 
-def decrypt_text(enc):
+def det(enc):
+    passphrase = __key__
     encrypted = base64.b64decode(enc)
     IV = encrypted[:BS]
-    aes = domeAES.new(__key__, domeAES.MODE_CFB, IV)
+    aes = domeAES.new(passphrase, domeAES.MODE_CFB, IV)
     enc = aes.decrypt(encrypted[BS:])
     unpad = lambda s: s[:-ord(s[-1:])]
     enc = base64.b64decode(enc)
-    iv = enc[:BS]
+    iv = enc[:cryptoAES.block_size]
     cipher = cryptoAES.new(__key__, cryptoAES.MODE_CFB, iv)
-    b=  unpad(base64.b64decode(cipher.decrypt(enc[BS:])).decode('utf8'))
+    b=  unpad(base64.b64decode(cipher.decrypt(enc[cryptoAES.block_size:])).decode('utf8'))
     return b
 
 def en_text(data_s):
@@ -65,7 +63,7 @@ def en_text(data_s):
     with open(data_s, 'r') as f:
         s = f.read() 
     with open(data_s, 'wb+') as f:
-        en_d = encrypt_text(s)
+        en_d = ent(s)
         f.write(en_d)
 
     #digitalSig
@@ -85,7 +83,7 @@ def de_text(data_s):
     with open(data_s, 'rb') as f:
         s = f.read()
     with open(data_s,"w+") as f:
-        de_d = decrypt_text(s)
+        de_d = det(s)
         f.write(de_d)
 
     #digital veri
@@ -110,30 +108,30 @@ class En:
     def pad(self, s):
         return s + b"\0" * (AES.block_size - len(s) % AES.block_size)
 
-    def encrypt(self, message, key, key_size=256):
+    def en(self, message, key, key_size=256):
         message = self.pad(message)
         iv = Random.new().read(AES.block_size)
         cipher = AES.new(key, AES.MODE_CBC, iv)
         return iv + cipher.encrypt(message)
 
-    def encrypt_file(self, file_name):
+    def en_f(self, file_name):
         with open(file_name, 'rb') as fo:
             plaintext = fo.read()
-        enc = self.encrypt(plaintext, self.key)
+        enc = self.en(plaintext, self.key)
         with open(file_name + ".enc", 'wb') as fo:
             fo.write(enc)
         os.remove(file_name)
 
-    def decrypt(self, ciphertext, key):
+    def de(self, ciphertext, key):
         iv = ciphertext[:AES.block_size]
         cipher = AES.new(key, AES.MODE_CBC, iv)
         plaintext = cipher.decrypt(ciphertext[AES.block_size:])
         return plaintext.rstrip(b"\0")
 
-    def decrypt_file(self, file_name):
+    def de_f(self, file_name):
         with open(file_name, 'rb') as fo:
             ciphertext = fo.read()
-        dec = self.decrypt(ciphertext, self.key)
+        dec = self.de(ciphertext, self.key)
         with open(file_name[:-4], 'wb') as fo:
             fo.write(dec)
         os.remove(file_name)
@@ -156,8 +154,8 @@ while True:
         #decrypt text
         de_text(dt_de)
     elif choose == 3:
-        enc.encrypt_file(str(input("File Encrypt: ")))
+        enc.en_f(str(input("File Encrypt: ")))
         clear()
     elif choose == 4:
-        enc.decrypt_file(str(input("File Decrypt: ")))
+        enc.de_f(str(input("File Decrypt: ")))
         clear()
